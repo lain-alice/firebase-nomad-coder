@@ -4,7 +4,6 @@ import { Outlet } from "react-router-dom";
 export default function Layout() {
   return (
     <>
-      <h2>layout</h2>
       <Outlet />
       {/* 경로가 /profile이면 Outlet 컴포넌트가 Profile로 대체됨 */}
     </>
