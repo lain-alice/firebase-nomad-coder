@@ -1,8 +1,18 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import styled from "styled-components";
-import { auth, storage } from "../firebase";
 import { updateProfile } from "firebase/auth";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import {
+  getDocs,
+  collection,
+  query,
+  limit,
+  orderBy,
+  where,
+} from "firebase/firestore";
+import { auth, db, storage } from "../firebase";
+import { ITweet } from "../components/timeline";
+import Tweet from "../components/tweet";
 
 const Wrapper = styled.div`
   display: flex;
@@ -29,16 +39,26 @@ const AvatarUpload = styled.label`
 const AvatarImg = styled.img`
   width: 100%;
 `;
+
 const AvatarInput = styled.input`
   display: none;
 `;
+
 const Name = styled.span`
   font-size: 22px;
+`;
+
+const Tweets = styled.div`
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 10px;
 `;
 
 export default function Home() {
   const user = auth.currentUser;
   const [avatar, setAvatar] = useState(user?.photoURL);
+  const [tweets, setTweets] = useState<ITweet[]>([]);
 
   const onAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const { files } = e.target;
@@ -56,6 +76,38 @@ export default function Home() {
       await updateProfile(user, { photoURL: avatarUrl });
     }
   };
+
+  const fetchTweets = async () => {
+    const tweetQuery = query(
+      collection(db, "tweets"),
+      where("userId", "==", user?.uid),
+      // The query requires an index. 인덱스가 뭘까
+      // Firestore db 너무 유연함, 어떤 구조로든 데이터 넣을 수 있음
+      // 그냥 데이터 가져오기 말고 조건 만들려면 Firebase에 어떤 필터링 할지 알려줘야 함
+      // 에러메시지로 firebase url 알려줌, 클릭해서 저장하면 끝
+      orderBy("createdAt", "desc"),
+      limit(25)
+    );
+    // 유저 id가 현재 로그인한 유저 id와 같은 트윗들만 가져옴
+
+    const snapshot = await getDocs(tweetQuery);
+    const tweets = snapshot.docs.map((doc) => {
+      const { tweet, createdAt, userId, username, photo } = doc.data();
+      return {
+        tweet,
+        createdAt,
+        userId,
+        username,
+        photo,
+        id: doc.id,
+      };
+    });
+    setTweets(tweets);
+  };
+
+  useEffect(() => {
+    fetchTweets();
+  }, []);
 
   return (
     <Wrapper>
@@ -84,6 +136,11 @@ export default function Home() {
         {user?.displayName ?? "Anonymous"}
         {/* ?? : Nullish Coalescing Operator, A가 null이거나 unidentified면 B로 해라 */}
       </Name>
+      <Tweets>
+        {tweets.map((tweet) => (
+          <Tweet key={tweet.id} {...tweet} />
+        ))}
+      </Tweets>
     </Wrapper>
   );
 }
