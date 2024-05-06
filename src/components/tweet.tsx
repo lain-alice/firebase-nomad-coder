@@ -3,6 +3,8 @@ import styled from "styled-components";
 import { auth, storage, db } from "../firebase";
 import { deleteDoc, doc } from "firebase/firestore";
 import { ref, deleteObject } from "firebase/storage";
+import EditTweetForm from "./edit-tweet-form";
+import { useState } from "react";
 
 const Wrapper = styled.div`
   display: grid;
@@ -12,7 +14,14 @@ const Wrapper = styled.div`
   border-radius: 15px;
 `;
 
-const Column = styled.div``;
+const Column = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  &:last-child:not(:first-child) {
+    align-items: center;
+  }
+`;
 const Photo = styled.img`
   width: 100px;
   height: 100px;
@@ -29,11 +38,34 @@ const Payload = styled.p`
   font-size: 15px;
 `;
 
+const ButtonWrapper = styled.div`
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+`;
+
 const DeleteButton = styled.button`
-  background-color: tomato;
-  color: white;
+  background-color: #000;
+  color: tomato;
   font-weight: 600;
-  border: none;
+  border: 1px solid tomato;
+  width: 68px;
+  height: 28px;
+  font-size: 12px;
+  padding: 5px 10px;
+  text-transform: uppercase;
+  text-align: center;
+  border-radius: 5px;
+  cursor: pointer;
+`;
+
+const EditButton = styled.button`
+  background-color: #000;
+  color: #1d9bf0;
+  font-weight: 600;
+  border: 1px solid #1d9bf0;
+  width: 68px;
+  height: 28px;
   font-size: 12px;
   padding: 5px 10px;
   text-transform: uppercase;
@@ -43,6 +75,8 @@ const DeleteButton = styled.button`
 
 export default function Tweet({ username, photo, tweet, userId, id }: ITweet) {
   const user = auth.currentUser;
+  const [isEditing, setIsEditing] = useState(false);
+
   const onDelete = async () => {
     const ok = confirm("정말 트윗을 삭제하시겠습니까?");
 
@@ -60,15 +94,30 @@ export default function Tweet({ username, photo, tweet, userId, id }: ITweet) {
       //
     }
   };
+  const onEdit = () => setIsEditing((prev) => !prev);
+
   return (
     <Wrapper>
       <Column>
         <Username>{username}</Username>
-        <Payload>{tweet}</Payload>
+        {isEditing ? (
+          <EditTweetForm
+            tweet={tweet}
+            photo={photo}
+            id={id}
+            setIsEditing={setIsEditing}
+          />
+        ) : (
+          <Payload>{tweet}</Payload>
+        )}
         {user?.uid === userId ? (
-          <DeleteButton onClick={onDelete}>Delete</DeleteButton>
+          <ButtonWrapper>
+            <DeleteButton onClick={onDelete}>Delete</DeleteButton>
+            <EditButton onClick={onEdit}>
+              {isEditing ? "Cancel" : "Edit"}
+            </EditButton>
+          </ButtonWrapper>
         ) : null}
-        {/* 트윗 유저정보 userId에 저장됨. 로그인한 유저id와 트윗 유저id 같을 때만 삭제버튼 표시 */}
       </Column>
       <Column>{photo ? <Photo src={photo} /> : null}</Column>
     </Wrapper>

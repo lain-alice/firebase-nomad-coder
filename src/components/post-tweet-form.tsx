@@ -62,7 +62,7 @@ const SubmitBtn = styled.input`
 `;
 
 export default function PostTweetForm() {
-  const maxFileSize = 10 * 1024 * 1024; // 10MB
+  const maxFileSize = 1024 * 1024; // 1MB
   const [isLoading, setLoading] = useState(false);
   const [tweet, setTweet] = useState("");
   const [file, setFile] = useState<File | null>(null);
@@ -75,7 +75,7 @@ export default function PostTweetForm() {
     if (files && files.length === 1) {
       // 파일 하나만 업로드하고 싶음, file이 존재하고 갯수 1개인지
       if (files[0].size > maxFileSize) {
-        alert("10MB 이하의 파일만 업로드 가능합니다.");
+        alert("1MB 이하의 파일만 업로드 가능합니다.");
         return;
       }
 
